@@ -1,0 +1,221 @@
+\documentclass[a4paper]{article}
+\usepackage[left=20mm, total={170mm, 257mm}, top=20mm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[czech]{babel}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{enumitem}
+\usepackage[ruled, linesnumbered]{algorithm2e}
+\usepackage{tikz}
+\usetikzlibrary{automata, positioning, arrows}
+\usepackage[hidelinks, colorlinks, linkcolor=blue]{hyperref}
+
+\setlength{\emergencystretch}{2pt}
+
+\SetKwInput{KwIn}{Vstup}
+\SetKwInput{KwOut}{Výstup}
+\renewcommand{\algorithmcfname}{Algoritmus}
+
+\let\blank\Delta
+\let\var\mathit
+\let\fnc\mathrm
+
+\newcommand{\bigO}[1]{\mathcal{O}(#1)}
+\newcommand{\ceil}[1]{\lceil#1\rceil}
+\newcommand{\len}[1]{\fnc{len}(#1)}
+\newcommand{\dtime}[1]{\var{DTIME}(#1)}
+\newcommand{\dspace}[1]{\var{DSPACE}(#1)}
+
+\setlist[enumerate, 1]{left=0pt}
+
+\newtheoremstyle{result}{}{}{}{}{\bfseries}{:}{ }{\thmname{#1}\thmnumber{ #2}\thmnote{ (#3)}}
+
+\theoremstyle{result}
+\newtheorem*{result}{Řešení}
+\newtheorem*{theorem}{Věta}
+
+\makeatletter
+\renewcommand\maketitle{
+{\raggedright
+\begin{center}
+{\Large \bfseries \@title}\\[2ex]
+{\@author}\\[8ex] 
+\end{center}}}
+\makeatother
+
+\title{Complexity/Složitost (SLOa) – 2022/2023\\[0.4ex] \large Homework assigment 1\\[0.4ex] Domácí úloha 1}
+\author{Domink Nejedlý (xnejed09)}
+
+\begin{document}
+
+\maketitle
+
+
+
+
+
+\begin{enumerate}
+
+
+
+    \item Navrhněte Turingův stroj, který implementuje reverzi vstupního řetězce nad latinskou abecedou $\Sigma = \{A, \dots, Z\}$.
+    
+    \begin{itemize}
+        \item Vstup je ve tvaru $\blank w\blank^\omega$, kde $w$ je vstupní řetězec.
+        \item Když Turingův stroj zastaví, první páska obsahuje $\blank w\#w^R\blank^\omega$, kde $w^R$ je reverze $w$ (např. pro $w = HELLO$, $w^R = OLLEH$)
+        \item Pokud navrhnete vícepáskový stroj, na obsahu ostatních pásek nezáleží.
+        \item Odhadněte horní meze jeho časové a prostorové složitost.
+    \end{itemize}
+
+    \begin{result}
+        Navrhněme dvoupáskový deterministický Turingův stroj $M$ implementující požadovanou reverzi vstupního řetězce nad latinskou abecedou $\Sigma$. Předpokládejme, že na počátku je vstup zapsán na 1. pásce $M$, druhá páska je prázdná a obě čtecí hlavy jsou na nejlevějších pozicích odpovídajících pásek. $M$ lze definovat následovně:
+
+        \begin{figure}[h]
+            \centering
+            
+            \begin{tikzpicture}[node distance=20mm, auto]
+
+            \node (q0) [state, initial, initial text={}] {$q_0$};
+            \node (q1) [state, right=of q0] {$q_1$};
+            \node (q2) [state, right=of q1] {$q_2$};
+            \node (q3) [state, right=of q2] {$q_3$};
+            \node (qf) [state, accepting, right=of q3] {$q_f$};
+
+            \node () [above=10mm of q2] {$\alpha \in \{A, \dots, Z\}$};
+
+            \path[->]
+                (q0) edge node {$\binom{\blank}{\blank}\big|\binom{R}{R}$} (q1)
+                (q1) edge [loop above] node {$\binom{\alpha}{\blank}\big|\binom{\alpha}{\alpha}, \binom{\alpha}{\alpha}\big|\binom{R}{R}$} ()
+                (q1) edge node {$\binom{\blank}{\blank}\big|\binom{\#}{\blank}$} (q2)
+                (q2) edge node {$\binom{\#}{\blank}\big|\binom{R}{L}$} (q3)
+                (q3) edge [loop above] node {$\binom{\blank}{\alpha}\big|\binom{\alpha}{\alpha}, \binom{\alpha}{\alpha}\big|\binom{R}{L}$} ()
+                (q3) edge node {$\binom{\blank}{\blank}\big|\binom{\blank}{\blank}$} (qf)
+            ;
+        
+            \end{tikzpicture}
+            \caption{Přechodový diagram dvoupáskového deterministického TS $M$}
+        \end{figure}
+
+        \begin{enumerate}[label=\arabic*)]
+            \item $M$ nejprve posune čtecí hlavy na obou páskách z prvního symbolu $\blank$ o jednu pozici doprava.
+            \item $M$ v lineárním čase nakopíruje obsah své první pásky na druhou -- znak po znaku postupně přepisuje symboly z~první pásky na druhou, přičemž po každém přepisu vždy provede posun obou čtecích hlav o~jednu pozici doprava, dokud se pod oběma z nich nenachází symbol $\blank$.
+            \item $M$ přepíše symbol $\blank$ na první pásce za symbol $\#$ (na druhé pásce symbol $\blank$ ponechá) a~provede posun čtecích hlav. Tentokrát však posune čtecí hlavu na první pásce ze symbolu $\#$ o~jednu pozici doprava a~čtecí hlavu na druhé pásce ze symbolu $\blank$ o jednu pozici doleva.
+            \item $M$ v lineárním čase postupně zprava doleva kopíruje obsah druhé pásky na první zleva doprava -- znak po znaku přepisuje symboly z druhé pásky na první, přičemž po každém přepisu jednoho znaku posune čtecí hlavu na první pásce o jednu pozici doprava a na druhé pásce o~jednu pozici doleva, dokud se pod oběma z nich nenachází symbol $\blank$, čímž běh stroje $M$~úspěšně končí.
+        \end{enumerate}
+
+        Je zřejmé, že tímto způsobem má $M$ na konci svého běhu pro každý vstup tvaru $\blank w\blank^\omega$, kde $w \in \Sigma^*$, na první pásce výstup tvaru $\blank w\#w^R\blank^\omega$. V případě špatného formátu vstupního řetězce (případně i~části vstupu, jež během svého výpočtu $M$ navštíví -- např. za symbolem $\blank$ za řetězcem $w$ se nachází neočekávaný symbol, na který čtecí hlava přistoupí) pak běh stroje $M$ abnormálně skončí. $M$ je tedy úplný.
+
+        Časová složitost výpočtu $M$ je pak zřejmě již od pohledu v lineární závislosti k délce vstupního řetězce. Platí tedy $T_M(n) = 1 + 2n + 2 + 2n + 1 = 4n + 4 \in \bigO{n}$. Z hlediska prostoru pak $M$ pro vstupní řetězec délky $n$~navštíví nanejvýš $2n + 3$ polí první pásky a $n + 2$ polí pásky druhé. Prostorová složitost výpočtu $M$ tedy odpovídá $S_M(n) = 2n + 3 + n + 2 = 3n + 5 \in \bigO{n}$.
+    \end{result}
+    
+    
+
+    \item Navrhněte RAM program, který pro vstupní vektor $I = (\var{min}, \var{max}, n)$ vypočítá číslo $k$ takové, že $\var{min} \le (k*n) \le \var{max}$. Předpokládejme, že všechna vstupní čísla jsou větší než nula, tj. $\var{min}, \var{max}, n > 0$. Po instrukci $\var{HALT}$ bude registr $r_0$ obsahovat číslo $k$, nebo $-1$, pokud takové $k$ neexistuje. (Poznámka: Není nutné implementovat optimální algoritmus.)
+
+    \begin{itemize}
+        \item Analyzujte jednotkovou (uniformní) časovou a prostorovou složitost a odhadněte horní meze.
+        \item Analyzujte logaritmickou časovou a prostorovou složitost a odhadněte horní meze.
+    \end{itemize}
+
+    Nezapomeňte, že časová a prostorová složitost RAM programu je odhadována s ohledem na velikost jeho vstupních dat (tj. počet bitů vstupního vektoru $(\var{min}, \var{max}, n)$).
+
+    \begin{result}
+        RAM program $\Pi$ řešící danou úlohu může pracovat následovně:
+
+        {\centering
+        \begin{minipage}{1\linewidth}
+        \begin{algorithm}[H]
+            \caption{RAM program $\Pi$ pro výpočet $k$ takového, že $\var{min} \le (k*n) \le \var{max}$}
+            \KwIn{vektor $I = (\var{min}, \var{max}, n)$, kde $\var{min}, \var{max}, n > 0$}
+            \KwOut{registr $r_0$ obsahující $k$, nebo $-1$ (v případě neexistence $k$)}
+            \verb|READ| $3$ \\
+            \verb|STORE| $3$ \\
+            \verb|READ| $2$ \\
+            \verb|STORE| $2$ \\
+            \verb|READ| $1$ \\
+            \verb|STORE| $1$ \\
+            \verb|LOAD| $4$ \\
+            \verb|ADD| $=1$ \\
+            \verb|STORE| $4$ \\
+            \verb|LOAD| $2$ \\
+            \verb|SUB| $3$ \\
+            \verb|STORE| $2$ \\
+            \verb|LOAD| $1$ \\
+            \verb|SUB| $3$ \\
+            \verb|JPOS| $=6$ \\
+            \verb|LOAD| $2$ \\
+            \verb|JNEG| $=20$ \\
+            \verb|LOAD| $4$ \\
+            \verb|HALT| \\
+            \verb|LOAD| $=-1$ \\
+            \verb|HALT|
+        \end{algorithm}
+        \end{minipage}
+        \par
+        }
+
+        Nejprve jsou jednotlivé složky vstupního vektoru $I$ (prostřednictvím jejich postupného načítání do registru $r_0$) uloženy do registrového pole stroje s náhodným přístupem -- $\var{min}$ do registru $r_1$, $\var{max}$ do registru $r_2$ a~$n$~do registru $r_3$. Poté je od hodnot $\var{min}$ a $\var{max}$ (resp. jejich průběžných hodnot držených v~registrech $r_1$ a $r_2$) opakovaně odečítána hodnota $n$~(z~registru $r_3$), dokud je průběžná hodnota $\var{min}$ kladná ($\var{min} > 0$), přičemž je v registru $r_4$ uchováván celkový průběžný počet vykonaných odečtení. Nutno poznamenat, že před každým odečtem, porovnáním i~inkrementací je daná hodnota vždy načtena do registru $r_0$, jelikož ten slouží jako akumulátor. Jakmile je pak průběžná hodnota $\var{min} \le 0$, je do registru $r_0$ načtena průběžná hodnota $\var{max}$, u~níž je zjišťováno, zdali je negativní ($\var{max} < 0$).
+        \begin{itemize}
+            \item Pokud ano ($\var{max} < 0$), potom žádné $k$ takové, že $\var{min} \le (k*n) \le \var{max}$ neexistuje. Do registru $r_0$ je tedy načtena hodnota $-1$, která je následně při ukončení programu navrácena.
+            \item Pokud ne ($\var{max} \ge 0$), pak je řešením $k$ zřejmě hodnota uložená v registru $r_4$. Je tedy načtena do registru $r_0$ a při následném ukončení programu navrácena.
+        \end{itemize}
+
+        Z analýzy kódu RAM programu $\Pi$ je zřejmé, že smyčka od instrukce $6$ po instrukci $15$ (včetně) je vždy provedena $\ceil{\frac{\var{min}}{n}}$-krát. V nejhorším případě pak, kdy $n = 1$, $\var{min}$-krát. Nechť $l = \len{I} = \len{\var{min}} + \len{\var{max}} + \len{n}$, kde $\len{x}$ je délka binární reprezentace $x$, představuje délku binární reprezentace vstupu $I$. RAM~program $\Pi$ zcela zřejmě vždy provede $5 + 10\ceil{\frac{\var{min}}{n}} + 4 = 10\ceil{\frac{\var{min}}{n}} + 9$, v nejhorším případě ($n = 1$) pak $10\var{min} + 9$, kroků, přičemž jistě platí $\ceil{\frac{\var{min}}{n}} \le \var{min} \le 2^l$. Z toho důvodu tedy jednotková časová složitost RAM programu $\Pi$ náleží do $\bigO{2^l}$ ($T_\Pi^{uni}(l) \in \bigO{2^l}$). Vzhledem k tomu, že pro každý vstup RAM program $\Pi$ používá 3 vstupní registry ($i_1$, $i_2$ a $i_3$) a 5 registrů ze svého registrového pole ($r_0$, $r_1$, $r_2$, $r_3$ a $r_4$) je jeho uniformní prostorová složitost v $\bigO{1}$ ($S_\Pi^{uni}(l) = 3 + 5 = 8 \in \bigO{1}$).
+
+        Jelikož RAM program $\Pi$ dostává na vstupu pouze kladná čísla a ve smyčce pak postupně odečítá od hodnot $\var{min}$ a $\var{max}$ hodnotu $n$, přičemž zvyšuje průběžnou hodnotu potenciálního $k$, jež začíná na hodnotě $0$, vždy o hodnotu $1$, je zřejmé, že hodnotou s nejdelší binární reprezentací, se kterou program pracuje je právě $\max(\var{min}, \var{max}, n)$ ( tedy maximální hodnota z hodnot $\var{min}$, $\var{max}$ a $n$). Vzhledem ke způsobu, jakým totiž RAM program $\Pi$ funguje, jistě vždy platí, že $k \le \var{min}$ (pro $n = 1$ platí $k = \var{min}$). Současně pak ani odečtení $n$ od hodnoty 1, což je nejnižší možná hodnota průběžných hodnot $\var{min}$ a $\var{max}$ před posledním odečtením $n$, nevyprodukuje záporné číslo s delší binární reprezentací než má $n$. Dále pak jistě platí, že $\len{\max(\var{min}, \var{max}, n)} \le l = \len{I}$, jelikož ani délka binární reprezentace nejvyšší vstupní hodnoty nemůže přesáhnout délku celého vstupu, jehož je součástí. Z toho důvodu logaritmická prostorová složitost RAM programu $\Pi$ náleží do $\bigO{l}$ ($S_\Pi^{log}(l) \in \bigO{l}$), neboť tento program pracuje s konečným počtem registrů a~délka binární reprezentace žádného čísla v nich uloženého nepřesáhne délku binární reprezentace vstupu $l = \len{I}$. Logaritmická časová složitost pak vychází z maximálního celkového počtu instrukcí, které RAM program $\Pi$ pro vstup délky $l$ provede, a maximální délky binární reprezentace čísel, jimiž může program manipulovat (ta, jak je již výše zmíněno, nikdy nepřesáhne $l$). Proto tedy logaritmická časová složitost RAM programu $\Pi$ náleží do $\bigO{n2^n} = \bigO{2^n2^{log_2(n)}} = \bigO{2^{n + log_2(n)}}$ ($T_\Pi^{log}(l) \in \bigO{2^{n + log_2(n)}}$).
+
+        \begin{table}[h]
+        \centering
+        \begin{tabular}{|l|c|}
+        \hline
+        Jednotková časová složitost & $T_\Pi^{uni}(l) \in \bigO{2^l}$ \\
+        \hline
+        Jednotková prostorová složitost & $S_\Pi^{uni}(l) \in \bigO{1}$ \\
+        \hline
+        Logaritmická časová složitost & $T_\Pi^{log}(l) \in \bigO{n2^n} = \bigO{2^{n + log_2(n)}}$ \\
+        \hline
+        Logaritmická prostorová složitost & $S_\Pi^{log}(l) \in \bigO{l}$ \\
+        \hline
+        \end{tabular}
+        \caption{Shrnutí analýzy složitosti RAM programu $\Pi$}
+        \end{table}
+    \end{result}
+
+
+
+    \item Nechť $L$ je regulární jazyk (tj. jazyk přijímaný konečným automatem). Odhadněte funkce $f(n)$ a~$g(n)$ tak, že $L \in \dtime{f(n)}$ a $L \in \dspace{g(n)}$. Dokažte své tvrzení.
+
+    \begin{result}
+        Víme, že pro každý regulární jazyk existuje úplně definovaný deterministický konečný automat -- konečný automat bez $\varepsilon$-přechodů, jež může z každého svého stavu přes každý symbol vstupní abecedy přejít do nanejvýš jednoho následujícího stavu, tzn. že z jednoho stavu nemůže prostřednictvím jednoho symbolu vstupní abecedy přejít do dvou a více různých stavů, přičemž je jeho přechodová funkce totální. Takový konečný automat přijímající jazyk $L$ pak každý řetězec $w$ jedním průchodem vstupní pásky (tj. přečtením celého vstupního řetězce $w$) zleva doprava buď přijme ($w \in L$), či odmítne ($w \notin L$). V~každém případě však tento automat provede pro každý řetězec délky $n$ právě $n$ přechodů, přičemž navštíví právě $n$ polí vstupní pásky. Vyvoďme tedy následující tvrzení.
+
+        \begin{theorem}
+            Pro každý regulární jazyk $L$ platí, že $L \in \dtime{n}$ a $L \in \dspace{n}$.
+        \end{theorem}
+
+        Odhadujme tedy, že pro funkce $f(n)$ a $g(n)$ ze zadání platí $f(n) = g(n) = n$. Nyní tohle tvrzení dokažme.
+
+        \begin{proof}
+            Mějme libovolný regulární jazyk $L$. Pak víme, že jistě existuje úplně definovaný deterministický konečný automat $M = (Q, \Sigma, \delta, q_0, F)$ takový, že $L(M) = L$ (přijímající jazyk $L$). Bez újmy na obecnosti předpokládejme, že $q'_0, q'_f \notin Q$ a $\blank \notin \Sigma$. Nyní sestrojme (jednopáskový) úplný deterministický Turingův stroj
+            $$M' = (Q \cup \{q'_0, q'_f\}, \Sigma, \Sigma \cup \{\blank\}, \delta', q'_0, q'_f),$$
+            kde
+            $$\delta' = \{((q'_0, \blank), (q_0, R))\} \cup \{((p, a), (q, R)) \mid ((p, a), q) \in \delta\} \cup \{((f, \blank), (q'_f, \blank))\}.$$
+            $M'$ pracuje následujícím způsobem:
+
+            \begin{enumerate}[label=\arabic*)]
+                \item $M'$ nejprve posune čtecí hlavu z počátečního symbolu $\blank$ o jednu pozici doprava, čímž se ve svém stavovém řízení dostane do bodu, kdy je schopen začít zpracovávat vstup způsobem odpovídajícímu čtení řetězce pomocí automatu $M$.
+                \item $M'$ postupně zpracovává vstup znak po znaku zleva doprava -- po každém čtení symbolu posune čtecí hlavu na pásce o jednu pozici doprava -- stejně jako konečný automat $M$, dokud se pod jeho čtecí hlavou nenachází symbol $\blank$. V tomto případě pak $M'$ abnormálně zastaví (nelze provést žádný přechod -- zpracovávaný řetězec nenáleží do jazyka $L$), nebo přejde do koncového stavu $q'_f$ a úspěšně skončí.
+            \end{enumerate}
+
+            Vidíme, že platí $L(M') = L(M) = L$ a také, že $M'$ je opravdu úplný (vždy zastaví). Dále lze vypozorovat, že na vstupním řetězci délky $n$, provede $M'$ při jeho přijetí $n + 2$ kroků a při jeho odmítnutí pak kroků $n + 1$. V~obou případech pak navštíví vždy $n + 2$ polí pásky. Zřejmě tedy platí, že $L(M') = L(M) = L \in \dtime{n}$ a $L(M') = L(M) = L \in \dspace{n}$.
+        \end{proof}
+    \end{result}
+
+
+    
+\end{enumerate}
+
+
+
+
+
+\end{document}
